@@ -4,16 +4,11 @@ on:
   push:
     branches:
       - main
-    paths: 
-      - "catalogue-service/**"
   pull_request:
     branches:
       - main
-    paths: 
-      - "catalogue-service/**"
-
 env:
-  IMAGE_NAME: ghcr.io/stanislasthbd/goodfood/service-catalogue
+  IMAGE_NAME: ghcr.io/Ismail-Mouyahada/service-catalogue/microservice-catalogue
   TF_CLI_ARGS_apply: "-auto-approve"
   TF_CLI_ARGS_destroy: "-auto-approve"
 
@@ -42,7 +37,6 @@ jobs:
           cache-dependency-path: catalogue-service/package-lock.json
 
       - name: Install Dependencies
-        working-directory: catalogue-service
         run: npm ci
 
       - name: Run Tests
@@ -58,7 +52,6 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}  # ✅ Ensure this token has correct permissions
 
       - name: Build Docker Image
-        working-directory: catalogue-service
         run: |
           docker build -t ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
