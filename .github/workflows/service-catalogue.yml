@@ -1,68 +1,35 @@
-name: CI/CD DevSecOps Pipeline
+name: CI/CD DevSecOps Pipeline Catalogue
 
 on:
   push:
     branches:
       - main
-    paths: 
-      - "catalogue-service/**"
-  pull_request:
-    branches:
-      - main
-    paths: 
-      - "catalogue-service/**"
 
 env:
-  IMAGE_NAME: ghcr.io/stanislasthbd/goodfood/service-catalogue
+  IMAGE_NAME: ghcr.io/Ismail-Mouyahada/service-catalogue
   TF_CLI_ARGS_apply: "-auto-approve"
   TF_CLI_ARGS_destroy: "-auto-approve"
 
 jobs:
+
+  # 🏗️ Build & Push Docker Image
   build:
-    runs-on: ubuntu-1.0.1
+    runs-on: ubuntu-latest
     permissions:
       packages: write
-      contents: write
-    strategy:
-      matrix:
-        node-version: [22]  # Run on multiple Node.js versions
-      fail-fast: false  # Allow other jobs to continue if one fails
-
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: catalogue-service/package-lock.json
-
-      - name: Install Dependencies
-        working-directory: catalogue-service
-        run: npm ci
-
-      - name: Run Tests (Optional)
-        working-directory: catalogue-service
-        run: npm test || true  # Ensures tests don’t break the entire workflow
-
       - name: Login to GitHub Container Registry
-        if: github.event_name == 'push'
-        run: |  
-                export CR_PAT="${{ secrets.GHCR_TOKEN }}" 
-                echo $CR_PAT | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
       - name: Build Docker Image
-        working-directory: catalogue-service
-        run: |
-          docker build -t ${{ env.IMAGE_NAME }}:1.0 -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+        run: docker build -t ${{ env.IMAGE_NAME }}:latest .
 
       - name: Push Docker Image to GHCR
-        if: github.event_name == 'push'
-        run: |
-          docker push ${{ env.IMAGE_NAME }}:1.0.1
-          docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: docker push ${{ env.IMAGE_NAME }}:latest
 
 
   # # 🛡️ Security Scans using Trivy
