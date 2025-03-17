@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: ghcr.io/Ismail-Mouyahada/service-catalogue
+  IMAGE_NAME: ghcr.io/ismail-mouyahada/service-catalogue
   TF_CLI_ARGS_apply: "-auto-approve"
   TF_CLI_ARGS_destroy: "-auto-approve"
 
