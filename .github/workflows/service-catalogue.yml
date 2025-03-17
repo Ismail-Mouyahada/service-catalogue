@@ -28,8 +28,18 @@ jobs:
       - name: Build Docker Image
         run: docker build -t ${{ env.IMAGE_NAME }}:latest .
 
-      - name: Push Docker Image to GHCR
-        run: docker push ${{ env.IMAGE_NAME }}:latest
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          # Le répertoire qui contient le code ET le Dockerfile
+          context: ./
+          # Nom du fichier Dockerfile (s’il s’appelle "Dockerfile", vous pouvez omettre cette ligne)
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Catalogue Service for GoodFood
 
 
   # # 🛡️ Security Scans using Trivy
