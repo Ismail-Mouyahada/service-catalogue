@@ -1,24 +1,21 @@
 name: Trigger auto deployment for service-catalogue-app
 
-# When this action will be executed
 on:
-  # Automatically trigger it when detected changes in repo
   push:
     branches: 
       [ main ]
     paths:
-    - '**'
-    - '.github/workflows/service-catalogue-app-AutoDeployTrigger-a787c45d-f79e-41b2-a56f-57bce419dc3e.yml'
+      - '**'
+      - '.github/workflows/service-catalogue-app.yml'
 
-  # Allow manual trigger 
   workflow_dispatch:      
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     permissions: 
-      id-token: write #This is required for requesting the OIDC JWT Token
-      contents: read #Required when GH token is used to authenticate with private repo
+      id-token: write 
+      contents: read 
 
     steps:
       - name: Checkout to the branch
@@ -30,6 +27,29 @@ jobs:
           client-id: ${{ secrets.SERVICECATALOGUEAPP_AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.SERVICECATALOGUEAPP_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.SERVICECATALOGUEAPP_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Créer Azure Cosmos DB avec API MongoDB
+        run: |
+          az cosmosdb create --name myCosmosDBAccount \
+                            --resource-group monGroupeDeRessources \
+                            --kind MongoDB \
+                            --enable-free-tier true
+
+          # Créer la base de données MongoDB
+          az cosmosdb mongodb database create \
+            --account-name myCosmosDBAccount \
+            --resource-group monGroupeDeRessources \
+            --name mondb
+
+      - name: Récupérer la chaîne de connexion MongoDB
+        run: |
+          COSMOS_CONN=$(az cosmosdb keys list \
+                        --name myCosmosDBAccount \
+                        --resource-group monGroupeDeRessources \
+                        --type connection-strings \
+                        --query "connectionStrings[0].connectionString" -o tsv)
+
+          echo "MONGO_URI=$COSMOS_CONN" >> $GITHUB_ENV
 
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
@@ -45,4 +65,9 @@ jobs:
           _buildArgumentsKey_: |
             _buildArgumentsValues_
 
-
+      - name: Injecter les variables d'environnement dans Azure Container App
+        run: |
+          az containerapp update \
+            --name service-catalogue-app \
+            --resource-group monGroupeDeRessources \
+            --set-env-vars MONGO_URI=${{ env.MONGO_URI }}
