@@ -41,7 +41,7 @@ jobs:
           registryPassword: ${{ secrets.SERVICECATALOGUEAPP_REGISTRY_PASSWORD }}
           containerAppName: service-catalogue-app
           resourceGroup: monGroupeDeRessources
-          imageToBuild: ghcr.io/service-catalogue:${{ github.sha }}
+          imageToBuild: ghcr.io/ismail-mouyahada/service-catalogue:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
 
